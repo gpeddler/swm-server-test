@@ -35,3 +35,8 @@ DATABASE_URL=sqlite:///database.db
 ```bash
 make dev
 ```
+
+## Python Settings
+
+- asdf: https://asdf-vm.com/guide/getting-started.html
+- asdf-python: https://github.com/asdf-community/asdf-python?tab=readme-ov-file#install
