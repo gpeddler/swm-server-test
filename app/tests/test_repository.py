@@ -58,8 +58,3 @@ class TestTodoRepository(unittest.TestCase):
         self.assertEqual(todo.title, "Test Todo")
         self.assertEqual(todo.description, "This is a test todo item")
         self.assertFalse(todo.completed)
-
-        # error - empty title
-        with self.assertRaises(ValueError) as context:
-            todo = self.todo_repository.create(TodoValue(title="", completed=False))
-        self.assertEqual(str(context.exception), "Title Field Required")

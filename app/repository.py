@@ -14,9 +14,6 @@ class TodoRepository:
             return todos
 
     def create(self, todo_value: TodoValue) -> Todo:
-        if len(todo_value.title) == 0:
-            raise ValueError("Title Field Required")
-
         with Session(self.engine) as session:
             todo = Todo.model_validate(todo_value)
             session.add(todo)

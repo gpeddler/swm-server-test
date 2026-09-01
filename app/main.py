@@ -1,10 +1,14 @@
-from typing import Annotated, Optional
-from fastapi import Depends, FastAPI
+from typing import Optional
 
-from app.api_models import CreateTodoRequest, CreateTodoResponse, ListTodoResponse
-from app.repository import TodoRepository
-from app.settings import Settings
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import JSONResponse
+
 from app import database
+from app.api_models import CreateTodoRequest, CreateTodoResponse, ListTodoResponse
+from app.exceptions import InvalidTodoTitleError
+from app.repository import TodoRepository
+from app.service import TodoService
+from app.settings import Settings
 
 app = FastAPI()
 settings = Settings()
@@ -19,6 +23,17 @@ def get_todo_repository():
     return TodoRepository(engine)
 
 
+def get_todo_service(
+    repository: TodoRepository = Depends(get_todo_repository),
+):
+    return TodoService(repository)
+
+
+@app.exception_handler(InvalidTodoTitleError)
+async def handle_invalid_todo_title(_request: Request, error: InvalidTodoTitleError):
+    return JSONResponse(status_code=422, content={"detail": str(error)})
+
+
 @app.get("/")
 async def health_check():
     return {}
@@ -28,14 +43,14 @@ async def health_check():
 async def list_todo(
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
-    repo: TodoRepository = Depends(get_todo_repository),
+    service: TodoService = Depends(get_todo_service),
 ):
-    return ListTodoResponse(data=repo.list(offset, limit))
+    return ListTodoResponse(data=service.list(offset, limit))
 
 
 @app.post("/api/todos/", response_model=CreateTodoResponse)
 async def create_todo(
     req: CreateTodoRequest,
-    repo: TodoRepository = Depends(get_todo_repository),
+    service: TodoService = Depends(get_todo_service),
 ):
-    return CreateTodoResponse(data=repo.create(req.data))
+    return CreateTodoResponse(data=service.create(req.data))

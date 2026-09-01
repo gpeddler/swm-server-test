@@ -1,29 +1,32 @@
 import unittest
+from unittest.mock import Mock
+
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel, create_engine
-from app.main import app
-from app.database import get_engine
 
-DATABASE_URL = "sqlite:///./test_main.db"
-engine = create_engine(DATABASE_URL)
-
-
-def override_get_engine():
-    return engine
-
-
-app.dependency_overrides[get_engine] = override_get_engine
-
-client = TestClient(app)
+from app.exceptions import InvalidTodoTitleError
+from app.main import app, get_todo_service
+from app.models import Todo, TodoValue
+from app.service import TodoService
 
 
 class TestTodoAPI(unittest.TestCase):
     def setUp(self):
-        SQLModel.metadata.drop_all(engine)
-        SQLModel.metadata.create_all(engine)
+        self.todo_service = Mock(spec=TodoService)
+        app.dependency_overrides[get_todo_service] = lambda: self.todo_service
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        app.dependency_overrides.clear()
 
     def test_create_todo_api(self):
-        response = client.post(
+        self.todo_service.create.return_value = Todo(
+            id=1,
+            title="Test Todo",
+            description="This is a test todo item",
+            completed=False,
+        )
+
+        response = self.client.post(
             "/api/todos/",
             json={
                 "data": {
@@ -33,17 +36,43 @@ class TestTodoAPI(unittest.TestCase):
                 }
             },
         )
+
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "data": {
+                    "id": 1,
+                    "title": "Test Todo",
+                    "description": "This is a test todo item",
+                    "completed": False,
+                }
+            },
+        )
+        self.todo_service.create.assert_called_once_with(
+            TodoValue(
+                title="Test Todo",
+                description="This is a test todo item",
+                completed=False,
+            )
+        )
 
-        data = response.json()
-        self.assertIn("data", data)
+    def test_create_todo_api_with_empty_title(self):
+        self.todo_service.create.side_effect = InvalidTodoTitleError()
 
-        data = data["data"]
-        self.assertIn("id", data)
-        self.assertEqual(data["title"], "Test Todo")
-        self.assertEqual(data["description"], "This is a test todo item")
-        self.assertFalse(data["completed"])
+        response = self.client.post(
+            "/api/todos/",
+            json={"data": {"title": "", "completed": False}},
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json(), {"detail": "Title Field Required"})
 
     def test_list_todos_api(self):
-        response = client.get("/api/todos/")
+        self.todo_service.list.return_value = []
+
+        response = self.client.get("/api/todos/")
+
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"data": []})
+        self.todo_service.list.assert_called_once_with(0, 10)
