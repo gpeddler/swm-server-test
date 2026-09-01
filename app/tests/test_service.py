@@ -12,6 +12,7 @@ class TestTodoService(unittest.TestCase):
         self.repository = Mock(spec=TodoRepository)
         self.todo_service = TodoService(self.repository)
 
+    # 성공: 목록 조회 조건을 Repository에 전달하고 조회 결과를 반환한다.
     def test_list_todos_service(self):
         expected = [Todo(id=1, title="Test Todo")]
         self.repository.list.return_value = expected
@@ -21,6 +22,7 @@ class TestTodoService(unittest.TestCase):
         self.assertEqual(todos, expected)
         self.repository.list.assert_called_once_with(5, 10)
 
+    # 성공: 유효한 Todo를 Repository에 전달하고 생성 결과를 반환한다.
     def test_create_todo_service(self):
         todo_value = TodoValue(title="Test Todo", completed=False)
         expected = Todo(id=1, title="Test Todo", completed=False)
@@ -31,6 +33,7 @@ class TestTodoService(unittest.TestCase):
         self.assertEqual(todo, expected)
         self.repository.create.assert_called_once_with(todo_value)
 
+    # 예외: 제목이 비어 있으면 전용 예외를 발생시키고 저장하지 않는다.
     def test_create_todo_service_with_empty_title(self):
         todo_value = TodoValue(title="", completed=False)
 

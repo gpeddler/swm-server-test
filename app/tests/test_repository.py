@@ -14,6 +14,7 @@ class TestTodoRepository(unittest.TestCase):
         SQLModel.metadata.drop_all(engine)
         SQLModel.metadata.create_all(engine)
 
+    # 성공: offset과 limit에 따라 Todo 목록을 조회한다.
     def test_list_todos_repository(self):
         todo_create1 = TodoValue(
             title="Test Todo 1", description="Description 1", completed=False
@@ -25,28 +26,28 @@ class TestTodoRepository(unittest.TestCase):
         self.todo_repository.create(todo_create1)
         self.todo_repository.create(todo_create2)
 
-        # ok - should return all list
+        # 성공: 기본 조건에서는 저장된 Todo를 모두 조회한다.
         todos = self.todo_repository.list()
         self.assertEqual(len(todos), 2)
         self.assertEqual(todos[0].get_value(), todo_create1)
         self.assertEqual(todos[1].get_value(), todo_create2)
 
-        # ok - should return first one
+        # 성공: limit을 적용하면 요청한 개수만큼 조회한다.
         todos = self.todo_repository.list(limit=1)
         self.assertEqual(len(todos), 1)
         self.assertEqual(todos[0].get_value(), todo_create1)
 
-        # ok - should return second one
+        # 성공: offset을 적용하면 앞의 Todo를 건너뛰고 조회한다.
         todos = self.todo_repository.list(limit=1, offset=1)
         self.assertEqual(len(todos), 1)
         self.assertEqual(todos[0].get_value(), todo_create2)
 
-        # ok - should be empty
+        # 성공: offset이 전체 개수보다 크면 빈 목록을 조회한다.
         todos = self.todo_repository.list(limit=10, offset=10)
         self.assertEqual(len(todos), 0)
 
+    # 성공: Todo를 저장하면 식별자가 부여된 Todo를 반환한다.
     def test_create_todo_repository(self):
-        # ok
         todo = self.todo_repository.create(
             TodoValue(
                 title="Test Todo",

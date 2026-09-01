@@ -18,6 +18,7 @@ class TestTodoAPI(unittest.TestCase):
     def tearDown(self):
         app.dependency_overrides.clear()
 
+    # 성공: 올바른 요청을 보내면 생성된 Todo를 응답한다.
     def test_create_todo_api(self):
         self.todo_service.create.return_value = Todo(
             id=1,
@@ -57,6 +58,7 @@ class TestTodoAPI(unittest.TestCase):
             )
         )
 
+    # 예외: 제목이 비어 있으면 422 상태와 제목 필수 오류를 응답한다.
     def test_create_todo_api_with_empty_title(self):
         self.todo_service.create.side_effect = InvalidTodoTitleError()
 
@@ -68,6 +70,7 @@ class TestTodoAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json(), {"detail": "Title Field Required"})
 
+    # 성공: Todo가 없으면 빈 목록을 응답한다.
     def test_list_todos_api(self):
         self.todo_service.list.return_value = []
 
