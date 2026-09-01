@@ -79,3 +79,41 @@ class TestTodoAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"data": []})
         self.todo_service.list.assert_called_once_with(0, 10)
+
+
+    # 성공: Todo 설명이 200자 이하이면 생성된 Todo를 응답한다.
+    
+
+    # 성공: Todo 설명이 비어있으면 생성된 Todo를 응답한다.
+
+
+    # 예외: todo의 설명이 200자를 초과하면 422 상태와 설명 길이 오류를 응답한다.
+    def test_create_todo_api_with_description_over_200_characters(self):
+        description = "a" * 201
+        self.todo_service.create.return_value = Todo(
+            id=1,
+            title="Test Todo",
+            description=description,
+            completed=False,
+        )
+
+        response = self.client.post(
+            "/api/todos/",
+            json={
+                "data": {
+                    "title": "Test Todo",
+                    "description": description,
+                    "completed": False,
+                }
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json(),
+                {
+                    "type": "string_too_long",
+                    "msg": "설명은 200자 이하로 입력해주세요.",
+                }
+        )
+        self.todo_service.create.assert_not_called()
