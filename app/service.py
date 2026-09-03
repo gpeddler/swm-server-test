@@ -13,5 +13,8 @@ class TodoService:
     def create(self, todo_value: TodoValue) -> Todo:
         if not todo_value.title:
             raise InvalidTodoTitleError()
-
+        
+        if len(todo_value.description) > 200:
+            return todo_value.fail_description_too_long()
+            
         return self.repository.create(todo_value)

@@ -9,7 +9,14 @@ class TodoBase(SQLModel):
 
 
 class TodoValue(TodoBase):
-    pass
+    code: int
+    message: str
+
+    def fail_description_too_long(self):
+        self.code = 422
+        self.message = "Description is too long"
+        return self
+        
 
 
 class Todo(TodoBase, table=True):

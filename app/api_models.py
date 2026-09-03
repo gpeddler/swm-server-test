@@ -13,4 +13,6 @@ class CreateTodoRequest(BaseModel):
 
 
 class CreateTodoResponse(BaseModel):
+    code: int
+    message: str
     data: Todo
